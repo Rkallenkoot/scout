@@ -92,12 +92,28 @@ class Builder
      * Add a constraint to the search query.
      *
      * @param  string  $field
+     * @param  mixed  $operator
      * @param  mixed  $value
      * @return $this
      */
-    public function where($field, $value)
+    public function where($field, $operator = null, $value = null)
+    
     {
-        $this->wheres[$field] = $value;
+        // Here we will make some assumptions about the operator. If only 2 values are
+        // passed to the method, we will assume that the operator is an equals sign
+        // and keep going. Otherwise, we'll require the operator to be passed in.
+        if (func_num_args() == 2) {
+            list($value, $operator) = [$operator, '='];
+        }
+
+        // If the given operator is not found in the list of valid operators we will
+        // assume that the developer is just short-cutting the '=' operators and
+        // we will set the operators to '=' and set the values appropriately.
+        if (!in_array($operator, ['=', '!=', '>', '>=', '<=', '<'])) {
+            $operator = '=';
+        }
+
+        $this->wheres[] = compact('field', 'operator', 'value');
 
         return $this;
     }

@@ -41,4 +41,35 @@ class BuilderTest extends AbstractTestCase
             'bar', $builder->foo()
         );
     }
+
+    public function test_where_clause_should_default_to_equal_when_operator_not_specified()
+    {
+        $builder = new Builder($model = Mockery::mock(), 'zonda');
+
+        $builder->where('foo', 1);
+
+        $expectedWhere = [
+            'field' => 'foo',
+            'operator' => '=',
+            'value' => 1,
+        ];
+
+        $this->assertEquals($expectedWhere ,$builder->wheres[0]);
+    }
+
+    public function test_where_clause_invalid_operator_should_default_to_equal()
+    {
+        $builder = new Builder($model = Mockery::mock(), 'zonda');
+
+        $builder->where('zonda', 'invalidOperator', 42);
+
+        $expectedWhere = [
+            'field' => 'zonda',
+            'operator' => '=',
+            'value' => 42,
+        ];
+
+        $this->assertEquals($expectedWhere ,$builder->wheres[0]);
+
+    }
 }

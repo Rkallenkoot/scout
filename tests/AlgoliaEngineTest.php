@@ -64,4 +64,31 @@ class AlgoliaEngineTest extends AbstractTestCase
 
         $this->assertEquals(1, count($results));
     }
+
+    public function test_where_clauses_are_correctly_converted_to_numerical_filters()
+    {
+        $client = Mockery::mock('AlgoliaSearch\Client');
+        $client->shouldReceive('initIndex')->with('table')->andReturn($index = Mockery::mock('StdClass'));
+        $index->shouldReceive('search')->with('zonda', [
+            'numericFilters' => [
+                'foo=1',
+                'foo!=1',
+                'foo>1',
+                'foo>=1',
+                'foo<=1',
+                'foo<1',
+            ],
+        ]);
+
+        $engine = new AlgoliaEngine($client);
+        $builder = new Builder(new AlgoliaEngineTestModel, 'zonda');
+        $builder->where('foo', '=', 1);
+        $builder->where('foo', '!=', 1);
+        $builder->where('foo', '>', 1);
+        $builder->where('foo', '>=', 1);
+        $builder->where('foo', '<=', 1);
+        $builder->where('foo', '<', 1);
+        $engine->search($builder);
+    }
+
 }

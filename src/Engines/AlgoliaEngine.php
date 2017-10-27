@@ -129,8 +129,8 @@ class AlgoliaEngine extends Engine
      */
     protected function filters(Builder $builder)
     {
-        return collect($builder->wheres)->map(function ($value, $key) {
-            return $key.'='.$value;
+        return collect($builder->wheres)->map(function ($where) {
+            return $where['field'] . $where['operator'] . $where['value'];
         })->values()->all();
     }
 
