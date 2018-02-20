@@ -30,7 +30,7 @@ class BuilderTest extends AbstractTestCase
         $builder->paginate();
     }
 
-    public function testMacroable()
+    public function test_macroable()
     {
         Builder::macro('foo', function () {
             return 'bar';
@@ -70,6 +70,12 @@ class BuilderTest extends AbstractTestCase
         ];
 
         $this->assertEquals($expectedWhere ,$builder->wheres[0]);
+    }
 
+    public function test_soft_delete_sets_wheres()
+    {
+        $builder = new Builder($model = Mockery::mock(), 'zonda', null, true);
+
+        $this->assertEquals(0, $builder->wheres['__soft_deleted']);
     }
 }

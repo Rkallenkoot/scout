@@ -9,6 +9,13 @@ use Illuminate\Support\Collection as BaseCollection;
 trait Searchable
 {
     /**
+     * Additional metadata attributes managed by Scout.
+     *
+     * @var array
+     */
+    protected $scoutMetadata = [];
+
+    /**
      * Boot the trait.
      *
      * @return void
@@ -77,6 +84,16 @@ trait Searchable
     }
 
     /**
+     * Determine if the model should be searchable.
+     *
+     * @return bool
+     */
+    public function shouldBeSearchable()
+    {
+        return true;
+    }
+
+    /**
      * Perform a search against the model's indexed data.
      *
      * @param  string  $query
@@ -85,7 +102,9 @@ trait Searchable
      */
     public static function search($query, $callback = null)
     {
-        return new Builder(new static, $query, $callback);
+        return new Builder(
+            new static, $query, $callback, config('scout.soft_delete', false)
+        );
     }
 
     /**
@@ -97,7 +116,13 @@ trait Searchable
     {
         $self = new static();
 
+        $softDeletes = in_array(SoftDeletes::class, class_uses_recursive(get_called_class())) &&
+                       config('scout.soft_delete', false);
+
         $self->newQuery()
+            ->when($softDeletes, function ($query) {
+                $query->withTrashed();
+            })
             ->orderBy($self->getKeyName())
             ->searchable();
     }
@@ -221,5 +246,39 @@ trait Searchable
     public function syncWithSearchUsingQueue()
     {
         return config('scout.queue.queue');
+    }
+
+    /**
+     * Sync the soft deleted status for this model into the metadata.
+     *
+     * @return $this
+     */
+    public function pushSoftDeleteMetadata()
+    {
+        return $this->withScoutMetadata('__soft_deleted', $this->trashed() ? 1 : 0);
+    }
+
+    /**
+     * Get all Scout related metadata.
+     *
+     * @return array
+     */
+    public function scoutMetadata()
+    {
+        return $this->scoutMetadata;
+    }
+
+    /**
+     * Set a Scout related metadata.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return void
+     */
+    public function withScoutMetadata($key, $value)
+    {
+        $this->scoutMetadata[$key] = $value;
+
+        return $this;
     }
 }

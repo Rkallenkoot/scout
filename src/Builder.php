@@ -65,14 +65,19 @@ class Builder
      *
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @param  string  $query
-     * @param  Closure  $callback
+     * @param  \Closure  $callback
+     * @param  bool  $softDelete
      * @return void
      */
-    public function __construct($model, $query, $callback = null)
+    public function __construct($model, $query, $callback = null, $softDelete = false)
     {
         $this->model = $model;
         $this->query = $query;
         $this->callback = $callback;
+
+        if ($softDelete) {
+            $this->wheres['__soft_deleted'] = 0;
+        }
     }
 
     /**
@@ -116,6 +121,30 @@ class Builder
         $this->wheres[] = compact('field', 'operator', 'value');
 
         return $this;
+    }
+
+    /**
+     * Include soft deleted records in the results.
+     *
+     * @return $this
+     */
+    public function withTrashed()
+    {
+        unset($this->wheres['__soft_deleted']);
+
+        return $this;
+    }
+
+    /**
+     * Include only soft deleted records in the results.
+     *
+     * @return $this
+     */
+    public function onlyTrashed()
+    {
+        return tap($this->withTrashed(), function () {
+            $this->wheres['__soft_deleted'] = 1;
+        });
     }
 
     /**
